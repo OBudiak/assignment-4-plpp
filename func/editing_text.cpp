@@ -7,18 +7,21 @@ EditingText::EditingText(Functionality& func) : functionality(func) {}
 void EditingText::addText() {
     cout << "  -Add text-  " << endl;
     cout << "Write a text: ";
-    char* newText = functionality.readline();
-    if (!newText) return;
-    functionality.addText(newText, -1, -1);
+    string newText = functionality.readline();
+    if (newText.empty()) return;
+    functionality.addText(newText);
 }
 
 void EditingText::addNewLine() {
     cout << "  -Add new line-  " << endl;
-    char* newText = (char*)malloc(2);
-    if (!newText) return;
-    newText[0] = '\n';
-    newText[1] = '\0';
-    functionality.relocateMemory(newText, -1, -1);
+    cout << "Line type (t)ext, (c)ontact, check(l)ist - ";
+    string lineType = functionality.readline();
+    while (lineType.length() > 1) {
+        cout << "Incorrect line type format!" << endl;
+        cout << "Line type (t)ext, (c)ontact, check(l)ist - ";
+        lineType = functionality.readline();
+    }
+    functionality.addNewLine(lineType.front());
 }
 
 void EditingText::insertTextOnPosition() {
@@ -43,15 +46,15 @@ void EditingText::insertTextOnPosition() {
 void EditingText::deleteText() {
     cout << "  -Delete text-  " << endl;
     cout << "Choose line, index and number of symbols: ";
-    char* tmpInput = functionality.readline();
-    if (!tmpInput) return;
+    string tmpInput = functionality.readline();
+    if (tmpInput.empty()) return;
     int line = 0, index = 0, count = 0;
-    if (sscanf(tmpInput, "%d %d %d", &line, &index, &count) != 3) {
+    if (sscanf(tmpInput.c_str(), "%d %d %d", &line, &index, &count) != 3) {
         cout << "Uncorrect parameters" << endl;
-        free(tmpInput);
+        tmpInput.clear();
         return;
     }
-    free(tmpInput);
+    tmpInput.clear();
     functionality.deleteText(line, index, count);
 }
 

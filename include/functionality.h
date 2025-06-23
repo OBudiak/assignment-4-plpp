@@ -15,17 +15,19 @@ class Functionality {
 public:
     Functionality();
     ~Functionality();
-    char* readline();
+    string readline();
     int powerF(int power);
-    void relocateMemory(char* newText, int x, int y);
+    void relocateMemory(string newText, int x, int y);
     void saveInFile();
     void loadFromFile();
     void searchText();
     void showText();
-    void addText(char*);
+
+    void addText(string);
+    void addNewLine(char lineType /*(t - text, c - contact, l - checklist)*/);
 
     void deleteText(int line, int index, int count);
-    // void insertWithReplacement(int line, int index, const char* newText);
+    // void insertWithReplacement(int line, int index, const string newText);
     // void copyText(int line, int index, int count);
     // void cutText(int line, int index, int count);
     // void pasteText(int line, int index);
@@ -35,12 +37,12 @@ public:
 
 private:
     std::vector<unique_ptr<Line>> lines;
-    char* clipboard;
+    string clipboard;
 
     size_t getGlobalIndex(int line, int index);
 
     static const int MAX_HISTORY = 5;
-    char* history[MAX_HISTORY];
+    string history[MAX_HISTORY];
     int historySize;
     int historyPos;
     int redoStartingPos;

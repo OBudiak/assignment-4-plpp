@@ -1,28 +1,30 @@
 ﻿#include "../include/functionality.h"
 
+#include <sstream>
+
 using namespace std;
 
 Functionality::Functionality() {
-    clipboard = NULL;
+    clipboard = nullptr;
     historySize = 0;
     historyPos = -1;
     redoStartingPos = -1;
     for (int i = 0; i < MAX_HISTORY; i++) {
-        history[i] = NULL;
+        history[i] = nullptr;
     }
 }
 
 Functionality::~Functionality() {
-    free(clipboard);
+    clipboard.clear();
     for (int i = 0; i < historySize; i++) {
-        free(history[i]);
+        history[i].clear();
     }
     for (int i = 0; i < lines.size(); i++) {
         delete lines[i];
     }
 }
 
-char* Functionality::readline() {
+string Functionality::readline() {
     size_t size = 64;
     size_t len = 0;
     char* buf = (char*)malloc(size);
@@ -38,6 +40,7 @@ char* Functionality::readline() {
                 return NULL;
             }
             buf = newbuf;
+            free(newbuf);
         }
         buf[len++] = c;
     }
@@ -50,31 +53,20 @@ int Functionality::powerF(int power) {
 }
 
 size_t Functionality::getGlobalIndex(int line, int index) {
-    if (!lines) return 0;
-    size_t idx = 0, curX = 0, curY = 0;
-    size_t oldLen = 0;
-    while (lines[oldLen]) oldLen++;
-
-    while (idx < oldLen && curY < (size_t)line) {
-        if (lines[idx] == '\n') {
-            curY++;
-            curX = 0;
-        } else {
-            curX++;
-        }
-        idx++;
+    if (lines.empty()) return 0;
+    auto textPtr = dynamic_cast<TextLine*>(lines[line].get());
+    if (!textPtr) {
+        cout << "Cannot change not text typed line with text" << endl;
+        return -1;
     }
-    curX = 0;
-    while (idx < oldLen && curX < (size_t)index) {
-        if (lines[idx] == '\n') break;
-        curX++;
-        idx++;
+    if (index > textPtr->text.size()) {
+        cout << "Index out of bounds" << endl;
+        return -1;
     }
-    if (idx > oldLen) idx = oldLen;
-    return idx;
+    return index;
 }
 
-void Functionality::addText(char* newText) {
+void Functionality::addText(string newText) {
     if (!lines.empty()) {
         auto& last = lines.back();
         auto textPtr = dynamic_cast<TextLine*>(last.get());
@@ -82,19 +74,36 @@ void Functionality::addText(char* newText) {
             textPtr->text = newText;
             return;
         }
-        char* buf = nullptr;
+        string buf = nullptr;
         int i = 0;
-        while (i < strlen(textPtr->text)) {
+        while (i < textPtr->text.length()) {
             buf[i] = textPtr->text[i];
             i++;
         }
-        while (i < strlen(newText) + strlen(textPtr->text)) {
+        while (i < strlen(newText) + textPtr->text.length()) {
             buf[i] = newText[i];
             i++;
         }
-        textPtr->text = (char*)realloc(buf, i + 1);
+        textPtr->text = buf;
     }
     lines.push_back(std::make_unique<TextLine>(newText));
+}
+
+void Functionality::addNewLine(char lineType) {
+    switch (lineType) {
+        case 't':
+            std::make_unique<TextLine>(nullptr);
+            break;
+        case 'c':
+            std::make_unique<ContactLine>(nullptr);
+            break;
+        case 'l':
+            std::make_unique<ChecklistLine>(nullptr);
+            break;
+        default:
+            cout << "Invalid line type" << endl;
+            break;
+    }
 }
 
 
@@ -213,28 +222,30 @@ void Functionality::searchText() {
         free(phrase);
         return;
     }
-    if (!lines) {
+    if (lines.empty()) {
         cout << "Text is empty" << endl << endl;
         free(phrase);
         return;
     }
 
-    char* t = lines;
     int line = 0, col = 0, found = 0;
-    size_t len_text = strlen(t);
-    size_t len_phrase = strlen(phrase);
+    for (auto& line : lines) {
+        char* t = line;
+        size_t len_text = strlen(t);
+        size_t len_phrase = strlen(phrase);
 
-    for (size_t i = 0; i < len_text; i++) {
-        if (t[i] == '\n') {
-            line++;
-            col = 0;
-            continue;
+        for (size_t i = 0; i < len_text; i++) {
+            if (t[i] == '\n') {
+                line++;
+                col = 0;
+                continue;
+            }
+            if (i + len_phrase <= len_text && strncmp(&t[i], phrase, len_phrase) == 0) {
+                cout << "\"" << phrase << "\" - " << line << " " << col << endl;
+                found = 1;
+            }
+            col++;
         }
-        if (i + len_phrase <= len_text && strncmp(&t[i], phrase, len_phrase) == 0) {
-            cout << "\"" << phrase << "\" - " << line << " " << col << endl;
-            found = 1;
-        }
-        col++;
     }
 
     if (!found) {
@@ -254,22 +265,15 @@ void Functionality::showText() {
 }
 
 void Functionality::deleteText(int line, int index, int count) {
-    if (!lines || count <= 0) return;
-    size_t oldLen = strlen(lines);
+    if (lines.empty() || count <= 0) return;
     size_t idx = getGlobalIndex(line, index);
-    if (idx >= oldLen) return;
-
-    if ((size_t)count > oldLen - idx) {
-        count = (int)(oldLen - idx);
+    if (idx == -1) return;
+    auto tl = dynamic_cast<TextLine*>(lines[line].get());
+    size_t oldLen = tl->text.length();
+    if (index + count > oldLen) {
+        count = static_cast<int>(oldLen) - index;
     }
-
-    size_t newLen = oldLen - count;
-    memmove(lines + idx, lines + idx + count, oldLen - idx - count + 1);
-
-    char* tmp = (char*)realloc(lines, newLen + 1);
-    if (tmp) {
-        lines = tmp;
-    }
+    tl->text.erase(index, count);
     saveCur();
 }
 
