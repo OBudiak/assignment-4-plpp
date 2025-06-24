@@ -1,38 +1,24 @@
-﻿#include "mylib.h"
+﻿#include "../include/mylib.h"
 #include <iostream>
 #include <string.h>
 
-const char* encrypt(const char* rawText, int key) {
-    if (rawText == NULL) {
-        std::cerr << "Encrypted Text is NULL" << std::endl;
-        return NULL;
-    }
-    int len = strlen(rawText);
-    char* encrypted = new char[len + 1];
-    key = key % 26;
-    if (key < 0) key += 26;
-    for (int i = 0; i < len; i++) {
-        if ('A' > rawText[i] || (rawText[i] > 'Z' && 'a' > rawText[i]) || rawText[i] > 'z') {
-            encrypted[i] = rawText[i];
-            continue;
+vector<uint8_t> Coding::encrypt(const vector<uint8_t> &bytes, int key) {
+        if (bytes.empty()) {
+            cerr << "Encrypted data is NULL" << endl;
+            return {};
         }
-        if (rawText[i] >= 'a') {
-            encrypted[i] = static_cast<char>((rawText[i] - 'a' + key) % 26 + 'a');
-            // std::cout << '-' << encrypted[i] << std::endl;
-        } else {
-            encrypted[i] = static_cast<char>((rawText[i] - 'A' + key) % 26 + 'A');
-            // std::cout << '-' << encrypted[i] << std::endl;
+        key = key & 0xFF;
+        vector<uint8_t> encrypted(bytes.size());
+        for (size_t i = 0; i < bytes.size(); ++i) {
+            encrypted[i] = bytes[i] ^ static_cast<uint8_t>(key);
         }
+        return encrypted;
     }
-    encrypted[len] = '\0';
-    // std::cout << encrypted << std::endl;
-    return encrypted;
-}
 
-const char* decrypt(const char* rawText, int key) {
-    if (rawText == NULL) {
-        std::cerr << "Decrypted Text is NULL" << std::endl;
-        return NULL;
-    }
-    return encrypt(rawText, -key);
+vector<uint8_t> Coding::decrypt(const vector<uint8_t>& bytes, int key) {
+        if (bytes.empty()) {
+            cerr << "Decrypted Text is NULL" << endl;
+            return {};
+        }
+        return encrypt(bytes, -key);
 }

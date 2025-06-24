@@ -10,10 +10,16 @@
   #define MYLIB_API
 #endif
 
+#include <cstdint>
 #include <string>
+#include <vector>
+using namespace std;
 
 // Оголошуємо експортувані функції
 extern "C" {
-    MYLIB_API const char* encrypt(const char* rawText, int key);
-    MYLIB_API const char* decrypt(const char* encryptedText, int key);
+  class Coding{
+    public:
+    MYLIB_API static vector<uint8_t> encrypt(const vector<uint8_t>& bytes, int key);
+    MYLIB_API static vector<uint8_t> decrypt(const vector<uint8_t>& bytes, int key);
+  };
 }

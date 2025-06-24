@@ -24,6 +24,67 @@ void EditingText::addNewLine() {
     functionality.addNewLine(lineType.front());
 }
 
+void EditingText::encryptTextInFile() {
+    cout << "  -Write text in file-  " << endl;
+
+    cout << "Enter file name: ";
+    string fileName;
+    getline(cin, fileName);
+    if (fileName.empty()) {
+        cout << "File name cannot be empty." << endl;
+        return;
+    }
+
+    cout << "Write a key: ";
+    string key;
+    getline(cin, key);
+    if (key.empty()) {
+        cout << "Key cannot be empty." << endl;
+        return;
+    }
+
+    int ki = 0;
+    try {
+        ki = stoi(key);
+    } catch (...) {
+        cout << "Invalid key format." << endl;
+        return;
+    }
+
+    functionality.saveInFile(fileName, ki);
+}
+
+void EditingText::decryptTextInFile() {
+    cout << "  -Load text from file-  " << endl;
+
+    cout << "Enter file name: ";
+    string fileName;
+    getline(cin, fileName);
+    if (fileName.empty()) {
+        cout << "File name cannot be empty." << endl;
+        return;
+    }
+
+    cout << "Write a key: ";
+    string key;
+    getline(cin, key);
+    if (key.empty()) {
+        cout << "Key cannot be empty." << endl;
+        return;
+    }
+
+    int ki = 0;
+    try {
+        ki = stoi(key);
+    } catch (...) {
+        cout << "Invalid key format." << endl;
+        return;
+    }
+
+    functionality.saveInFile(fileName, ki);
+}
+
+
 void EditingText::insertTextOnPosition() {
     cout << "  -Insert text by coordinate-  " << endl;
     cout << "Write a position (x y) - ";

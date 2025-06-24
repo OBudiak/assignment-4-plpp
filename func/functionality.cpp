@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <sstream>
+#include "../include/mylib.h"
 
 using namespace std;
 
@@ -137,17 +138,17 @@ void Functionality::relocateMemory(const string& newText, int x, int y) {
 }
 
 
-void Functionality::saveInFile() {
-    cout << "-Save in file-" << endl;
+void Functionality::saveInFile(string fileName, int key) {
+    /*cout << "-Save in file-" << endl;
     cout << "Enter file name: ";
     string fileName;
-    getline(cin, fileName);
+    getline(cin, fileName);*/
     if (fileName.empty()) return;
     FILE* f = fopen(fileName.c_str(), "wb");
     if (!f) return;
 
     for (auto& line : lines) {
-        auto payload = line->serialize();
+        auto payload = Coding::encrypt(line->serialize(), key);
         uint8_t typeId = line->getCode();
         uint32_t len = payload.size();
 
@@ -160,7 +161,7 @@ void Functionality::saveInFile() {
 }
 
 
-void Functionality::loadFromFile() {
+void Functionality::loadFromFile(string fileName, int key) {
     cout << "-Load from file-" << endl;
     cout << "Enter file name: ";
     string fileName;

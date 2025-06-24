@@ -18,8 +18,8 @@ public:
     string readline();
     int powerF(int power);
     void relocateMemory(const string& newText, int x, int y);
-    void saveInFile();
-    void loadFromFile();
+    void saveInFile(string, int);
+    void loadFromFile(string, int);
     void searchText();
     void showText();
 

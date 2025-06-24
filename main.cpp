@@ -31,10 +31,10 @@ int chooseCommand(int command, EditingText& editor, Functionality& func) {
             editor.addNewLine();
             break;
         case 3:
-            func.saveInFile();
+            editor.encryptTextInFile();
             break;
         case 4:
-            func.loadFromFile();
+            func.encryptTextInFile();
             break;
         case 5:
             func.showText();

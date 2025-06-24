@@ -14,6 +14,9 @@ public:
     void insertTextOnPosition();
     void insertWithReplacement();
 
+    void encryptTextInFile();
+    void decryptTextInFile();
+
     void deleteText();
     void copyText();
     void pasteText();
