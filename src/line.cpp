@@ -5,13 +5,39 @@
 #include "line.h"
 
  TextLine::TextLine(){
-     text = NULL;
+     text = nullptr;
  }
 TextLine::TextLine(string newText){
      text = newText;
  }
+uint8_t TextLine::getCode() const {
+    return code;
+}
 
-std::ostream& TextLine::print(std::ostream& os) const override {
+vector<uint8_t> TextLine::serialize() const {
+     vector<uint8_t> bytes;
+     uint32_t len = text.size();
+     uint8_t* pLen = reinterpret_cast<uint8_t*>(&len);
+     bytes.insert(bytes.end(), pLen, pLen + sizeof(len));
+     bytes.insert(bytes.end(), text.begin(), text.end());
+     return bytes;
+ }
+
+string deserialize(const vector<uint8_t>& data, size_t offset) {
+     uint32_t len;
+     memcpy(&len, data.data() + offset, sizeof(len));
+     offset += sizeof(len);
+     string s(data.begin() + offset, data.begin() + offset + len);
+     offset += len;
+     return s;
+ }
+
+unique_ptr<Line> TextLine::createFrom(const vector<uint8_t>& data, size_t& offset) {
+     auto ptr = make_unique<TextLine>();
+     ptr->deserialize(data, offset);
+     return ptr;
+ }
+ostream& TextLine::print(ostream& os) const {
      return os << text;
  }
 
@@ -22,7 +48,11 @@ ContactLine::ContactLine() {
 ContactLine::ContactLine(string newText) {
      firstName = NULL, lastName = NULL, email = NULL;
  }
-std::ostream& ContactLine::print(std::ostream& os) const override {
+uint8_t ContactLine::getCode() const{
+    return code;
+}
+
+ostream& ContactLine::print(ostream& os) const {
      return os << "Contacts: "
                << firstName << ' '
                << lastName  << " - <"
@@ -34,8 +64,12 @@ ChecklistLine::ChecklistLine() {
     text = NULL;
      checked = false;
 }
+uint8_t ChecklistLine::getCode() const {
+    return code;
+}
 
-std::ostream& ChecklistLine::print(std::ostream& os) const override {
+
+ostream& ChecklistLine::print(ostream& os) const {
      return os << '[' << (checked ? '0' : ' ') << "] "
                << text;
  }

@@ -17,13 +17,13 @@ public:
     ~Functionality();
     string readline();
     int powerF(int power);
-    void relocateMemory(string newText, int x, int y);
+    void relocateMemory(const string& newText, int x, int y);
     void saveInFile();
     void loadFromFile();
     void searchText();
     void showText();
 
-    void addText(string);
+    void addText(const string&);
     void addNewLine(char lineType /*(t - text, c - contact, l - checklist)*/);
 
     void deleteText(int line, int index, int count);

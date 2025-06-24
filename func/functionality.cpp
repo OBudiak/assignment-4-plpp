@@ -1,5 +1,7 @@
 ﻿#include "../include/functionality.h"
 
+#include <algorithm>
+#include <chrono>
 #include <sstream>
 
 using namespace std;
@@ -66,25 +68,27 @@ size_t Functionality::getGlobalIndex(int line, int index) {
     return index;
 }
 
-void Functionality::addText(string newText) {
+void Functionality::addText(const string& newText) {
     if (!lines.empty()) {
         auto& last = lines.back();
         auto textPtr = dynamic_cast<TextLine*>(last.get());
         if (textPtr) {
-            textPtr->text = newText;
+            textPtr->text += newText;
             return;
         }
-        string buf = nullptr;
+        textPtr->text = newText;
+        /*string buf = nullptr;
         int i = 0;
         while (i < textPtr->text.length()) {
             buf[i] = textPtr->text[i];
             i++;
         }
-        while (i < strlen(newText) + textPtr->text.length()) {
+        while (i < newText.length() + textPtr->text.length()) {
             buf[i] = newText[i];
             i++;
         }
         textPtr->text = buf;
+        */
     }
     lines.push_back(std::make_unique<TextLine>(newText));
 }
@@ -92,13 +96,13 @@ void Functionality::addText(string newText) {
 void Functionality::addNewLine(char lineType) {
     switch (lineType) {
         case 't':
-            std::make_unique<TextLine>(nullptr);
+            lines.push_back(make_unique<TextLine>(nullptr));
             break;
         case 'c':
-            std::make_unique<ContactLine>(nullptr);
+            lines.push_back(make_unique<ContactLine>(nullptr));
             break;
         case 'l':
-            std::make_unique<ChecklistLine>(nullptr);
+            lines.push_back(make_unique<ChecklistLine>(nullptr));
             break;
         default:
             cout << "Invalid line type" << endl;
@@ -107,110 +111,87 @@ void Functionality::addNewLine(char lineType) {
 }
 
 
-void Functionality::relocateMemory(char* newText, int x, int y) {
-    size_t oldLen = 0;
-
-    size_t addLen = 0;
-    while (newText[addLen]) addLen++;
-
-
-    char* tmp = (char*)realloc(lines, oldLen + addLen + 1);
-    if (!tmp) {
-        free(newText);
-        return;
+void Functionality::relocateMemory(const string& newText, int x, int y) {
+    TextLine* textPtr = nullptr;
+    if (y >= 0 && static_cast<size_t>(y) < lines.size()) {
+        textPtr = dynamic_cast<TextLine*>(lines[y].get());
     }
-    lines = tmp;
-
-    size_t idx = 0, curX = 0, curY = 0;
-    if (x >= 0 && y >= 0) {
-        while (idx < oldLen && (curY < (size_t)y || curX < (size_t)x)) {
-            if (lines[idx] == '\n') {
-                curY++;
-                curX = 0;
-            } else {
-                curX++;
-            }
-            idx++;
+    if (!textPtr) {
+        auto newLine = make_unique<TextLine>(nullptr);
+        textPtr = newLine.get();
+        if (y >= 0 && static_cast<size_t>(y) <= lines.size()) {
+            lines.insert(lines.begin() + y, move(newLine));
+        } else {
+            lines.push_back(move(newLine));
         }
-        if (idx > oldLen) idx = oldLen;
+    }
+    if (x == -1 && y == -1) {
+        textPtr->text += newText;
     } else {
-        idx = oldLen;
+        size_t pos = (x >= 0 && static_cast<size_t>(x) <= textPtr->text.size())
+                         ? static_cast<size_t>(x)
+                         : textPtr->text.size();
+        textPtr->text.insert(pos, newText);
     }
-
-    char* src = lines + idx;
-    char* dest = lines + idx + addLen;
-    size_t moveLen = oldLen - idx + 1;
-
-    if (dest > src) {
-        size_t i = moveLen;
-        while (i--) {
-            dest[i] = src[i];
-        }
-    } else {
-        for (size_t i = 0; i < moveLen; i++) {
-            dest[i] = src[i];
-        }
-    }
-
-    for (size_t i = 0; i < addLen; i++) {
-        lines[idx + i] = newText[i];
-    }
-    lines[oldLen + addLen] = '\0';
-    free(newText);
     saveCur();
 }
 
+
 void Functionality::saveInFile() {
-    cout << "  -Save in file-  " << endl;
+    cout << "-Save in file-" << endl;
     cout << "Enter file name: ";
-    char* fileName = readline();
-    if (!fileName) return;
-    FILE* file = fopen(fileName, "w");
-    if (file != NULL) {
-        fputs(lines, file);
-        fclose(file);
+    string fileName;
+    getline(cin, fileName);
+    if (fileName.empty()) return;
+    FILE* f = fopen(fileName.c_str(), "wb");
+    if (!f) return;
+
+    for (auto& line : lines) {
+        auto payload = line->serialize();
+        uint8_t typeId = line->getCode();
+        uint32_t len = payload.size();
+
+        fwrite(&typeId, 1, 1, f);
+        fwrite(&len, sizeof(len), 1, f);
+        fwrite(payload.data(), 1, payload.size(), f);
     }
-    free(fileName);
+
+    fclose(f);
 }
 
+
 void Functionality::loadFromFile() {
-    cout << "  -Load from file-  " << endl;
+    cout << "-Load from file-" << endl;
     cout << "Enter file name: ";
-    char* fileName = readline();
-    if (!fileName) return;
+    string fileName;
+    getline(cin, fileName);
+    if (fileName.empty()) return;
+    FILE* f = fopen(fileName.c_str(), "rb");
+    if (!f) return;
 
-    FILE* file = fopen(fileName, "r");
-    free(fileName);
-    if (!file) {
-        cout << "Error opening file" << endl;
-        return;
-    }
+    lines.clear();
+    size_t offset = 0;
+    while (true) {
+        uint8_t  typeId;
+        if (fread(&typeId, 1, 1, f) != 1) break;
+        uint32_t len;
+        fread(&len, sizeof(len), 1, f);
 
-    size_t size = 128, len = 0;
-    char* buf = (char*)malloc(size);
-    if (!buf) {
-        fclose(file);
-        return;
-    }
+        vector<uint8_t> buffer(len);
+        fread(buffer.data(), 1, len, f);
 
-    int c;
-    while ((c = fgetc(file)) != EOF) {
-        if (len + 1 >= size) {
-            size *= 2;
-            char* tmpBuf = (char*)realloc(buf, size);
-            if (!tmpBuf) {
-                free(buf);
-                fclose(file);
-                return;
-            }
-            buf = tmpBuf;
+        unique_ptr<Line> obj;
+        switch (typeId) {
+            case 1: obj = TextLine::createFrom(buffer, offset); break;
+            case 2: obj = ContactLine::createFrom(buffer, offset); break;
+            case 3: obj = ChecklistLine::createFrom(buffer, offset); break;
+            default: continue;
         }
-        buf[len++] = (char)c;
+        offset += len;
+        lines.push_back(move(obj));
     }
-    buf[len] = '\0';
-    fclose(file);
-    free(lines);
-    lines = buf;
+
+    fclose(f);
 }
 
 void Functionality::searchText() {
@@ -257,10 +238,12 @@ void Functionality::searchText() {
 
 void Functionality::showText() {
     cout << "  -Show text-  " << endl;
-    if (lines == NULL) {
+    if (lines.empty()) {
         cout << "[Текст порожній]" << endl << endl;
     } else {
-        cout << lines << endl;
+        for (auto& line : lines) {
+            cout << line << endl;
+        }
     }
 }
 
