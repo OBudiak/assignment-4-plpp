@@ -16,21 +16,21 @@ public:
     Functionality();
     ~Functionality();
     string readline();
+    bool isEmpty() const;
     int powerF(int power);
     void relocateMemory(const string& newText, int x, int y);
     void saveInFile(string, int);
     void loadFromFile(string, int);
-    void searchText();
+    void searchInText(string);
     void showText();
 
     void addText(const string&);
     void addNewLine(char lineType /*(t - text, c - contact, l - checklist)*/);
 
     void deleteText(int line, int index, int count);
-    // void insertWithReplacement(int line, int index, const string newText);
-    // void copyText(int line, int index, int count);
-    // void cutText(int line, int index, int count);
-    // void pasteText(int line, int index);
+    void copyText(int line, int index, int count);
+    void cutText(int line, int index, int count);
+    void pasteText(int line, int index);
 
     void undoText();
     void redoText();

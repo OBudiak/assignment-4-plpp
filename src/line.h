@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <vector>
 #include <iostream>
-#include <cstring>
+#include <sstream>
 #include <memory>
 
 using namespace std;
@@ -18,7 +18,8 @@ public:
     virtual ~Line() = default;
     virtual vector<uint8_t> serialize() const = 0;
     virtual string deserialize(const vector<uint8_t>& data, size_t offset) = 0;
-    virtual std::ostream& print(std::ostream& os) const = 0;
+    virtual ostream& print(ostream& os) const = 0;
+    virtual string getString() const;
     virtual uint8_t getCode() const;
 };
 
@@ -36,7 +37,8 @@ public:
     string deserialize(const vector<uint8_t>& data, size_t offset) override;
 
     static unique_ptr<Line> createFrom(const vector<uint8_t>& data, size_t& offset);
-    std::ostream& print(std::ostream& os) const override;
+    string getString() const override;
+    ostream& print(ostream& os) const override;
 
     // ... реалізація serialize()/deserialize() для рядка
 };
@@ -53,6 +55,7 @@ public:
     string deserialize(const vector<uint8_t>& data, size_t offset) override;
 
     static unique_ptr<Line> createFrom(const vector<uint8_t>& data, size_t& offset);
+    string getString() const override;
     std::ostream& print(std::ostream& os) const override;
     // у serialize():
     //   [len1][bytes of firstName][len2][bytes of lastName][len3][bytes of email]
@@ -72,6 +75,7 @@ public:
     string deserialize(const vector<uint8_t>& data, size_t offset) override;
 
     static unique_ptr<Line> createFrom(const vector<uint8_t>& data, size_t& offset);
+    string getString() const override;
     std::ostream& print(std::ostream& os) const override;
     // serialize():
     //   [lenText][bytes of text][1 byte: 0 or 1]

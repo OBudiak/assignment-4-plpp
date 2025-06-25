@@ -13,6 +13,7 @@ public:
     void addNewLine();
     void insertTextOnPosition();
     void insertWithReplacement();
+    void searchInText();
 
     void encryptTextInFile();
     void decryptTextInFile();

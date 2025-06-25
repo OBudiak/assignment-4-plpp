@@ -4,7 +4,7 @@
 
 #include "line.h"
 
- TextLine::TextLine(){
+TextLine::TextLine(){
      text = nullptr;
  }
 TextLine::TextLine(string newText){
@@ -37,9 +37,16 @@ unique_ptr<Line> TextLine::createFrom(const vector<uint8_t>& data, size_t& offse
      ptr->deserialize(data, offset);
      return ptr;
  }
+
+string TextLine::getString() const {
+    ostringstream oss;
+    print(oss);
+    return oss.str();
+}
+
 ostream& TextLine::print(ostream& os) const {
-     return os << text;
- }
+    return os << text;
+}
 
 
 ContactLine::ContactLine() {
@@ -53,11 +60,17 @@ uint8_t ContactLine::getCode() const{
 }
 
 ostream& ContactLine::print(ostream& os) const {
-     return os << "Contacts: "
-               << firstName << ' '
-               << lastName  << " - <"
-               << email     << '>';
- }
+return os << "Contacts: "
+       << firstName << ' '
+       << lastName  << " - <"
+       << email     << '>';
+}
+
+string ContactLine::getString() const {
+    ostringstream oss;
+    print(oss);
+    return oss.str();
+}
 
 
 ChecklistLine::ChecklistLine() {
@@ -70,7 +83,12 @@ uint8_t ChecklistLine::getCode() const {
 
 
 ostream& ChecklistLine::print(ostream& os) const {
-     return os << '[' << (checked ? '0' : ' ') << "] "
-               << text;
- }
+    return os << '[' << (checked ? '0' : ' ') << "] " << text;
+}
+
+string ChecklistLine::getString() const {
+    ostringstream oss;
+    print(oss);
+    return oss.str();
+}
 

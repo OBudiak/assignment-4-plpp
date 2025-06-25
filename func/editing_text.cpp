@@ -84,23 +84,40 @@ void EditingText::decryptTextInFile() {
     functionality.saveInFile(fileName, ki);
 }
 
+void EditingText::searchInText() {
+    cout << "  -Search in text-  " << endl;
+    if (functionality.isEmpty()) {
+        cout << "Cannot search in empty text" << endl << endl;
+        return;
+    }
+    cout << "Enter text: ";
+    string phrase = functionality.readline();
+    if (phrase.empty() || phrase[0] == '\0') {
+        cout << "Empty search string" << endl << endl;
+        phrase.clear();
+        return;
+    }
+    functionality.searchInText(phrase);
+}
+
+
 
 void EditingText::insertTextOnPosition() {
     cout << "  -Insert text by coordinate-  " << endl;
     cout << "Write a position (x y) - ";
-    char* tmpInput = functionality.readline();
-    if (!tmpInput) return;
+    string tmpInput = functionality.readline();
+    if (tmpInput.empty()) return;
     int x = 0, y = 0;
-    if (sscanf(tmpInput, "%d %d", &x, &y) != 2) {
+    if (sscanf(tmpInput.c_str(), "%d %d", &x, &y) != 2) {
         cout << "Uncorrect coordinates" << endl;
-        free(tmpInput);
+        tmpInput.clear();
         return;
     }
-    free(tmpInput);
+    tmpInput.clear();
 
     cout << "Write a text: ";
-    char* newText = functionality.readline();
-    if (!newText) return;
+    string newText = functionality.readline();
+    if (newText.empty()) return;
     functionality.relocateMemory(newText, x, y);
 }
 
@@ -122,63 +139,64 @@ void EditingText::deleteText() {
 void EditingText::insertWithReplacement() {
     cout << "  -Insert with replacement-  " << endl;
     cout << "Choose line and index: ";
-    char* tmpInput = functionality.readline();
-    if (!tmpInput) return;
+    string tmpInput = functionality.readline();
+    if (tmpInput.empty()) return;
     int line = 0, index = 0;
-    if (sscanf(tmpInput, "%d %d", &line, &index) != 2) {
+    if (sscanf(tmpInput.c_str(), "%d %d", &line, &index) != 2) {
         cout << "Uncorrect parameters" << endl;
-        free(tmpInput);
+        tmpInput.clear();
         return;
     }
-    free(tmpInput);
+    tmpInput.clear();
 
     cout << "Write text: ";
-    char* newText = functionality.readline();
-    if (!newText) return;
-    functionality.insertWithReplacement(line, index, newText);
+    string newText = functionality.readline();
+    if (newText.empty()) return;
+    functionality.deleteText(line, index, newText.length());
+    functionality.relocateMemory(newText, line, index);
 }
 
 void EditingText::copyText() {
     cout << "  -Copy text-  " << endl;
     cout << "Choose line and index and number of symbols: ";
-    char* tmpInput = functionality.readline();
-    if (!tmpInput) return;
+    string tmpInput = functionality.readline();
+    if (tmpInput.empty()) return;
     int line = 0, index = 0, count = 0;
-    if (sscanf(tmpInput, "%d %d %d", &line, &index, &count) != 3) {
+    if (sscanf(tmpInput.c_str(), "%d %d %d", &line, &index, &count) != 3) {
         cout << "Uncorrect parameters" << endl;
-        free(tmpInput);
+        tmpInput.clear();
         return;
     }
-    free(tmpInput);
+    tmpInput.clear();
     functionality.copyText(line, index, count);
 }
 
 void EditingText::cutText() {
     cout << "  -Cut text-  " << endl;
     cout << "Choose line and index and number of symbols: ";
-    char* tmpInput = functionality.readline();
-    if (!tmpInput) return;
+    string tmpInput = functionality.readline();
+    if (tmpInput.empty()) return;
     int line = 0, index = 0, count = 0;
-    if (sscanf(tmpInput, "%d %d %d", &line, &index, &count) != 3) {
+    if (sscanf(tmpInput.c_str(), "%d %d %d", &line, &index, &count) != 3) {
         cout << "Uncorrect parameters" << endl;
-        free(tmpInput);
+        tmpInput.clear();
         return;
     }
-    free(tmpInput);
+    tmpInput.clear();
     functionality.cutText(line, index, count);
 }
 
 void EditingText::pasteText() {
     cout << "  -Paste text-  " << endl;
     cout << "Choose line and index: ";
-    char* tmpInput = functionality.readline();
-    if (!tmpInput) return;
+    string tmpInput = functionality.readline();
+    if (tmpInput.empty()) return;
     int line = 0, index = 0;
-    if (sscanf(tmpInput, "%d %d", &line, &index) != 2) {
+    if (sscanf(tmpInput.c_str(), "%d %d", &line, &index) != 2) {
         cout << "Uncorrect parameters" << endl;
-        free(tmpInput);
+        tmpInput.clear();
         return;
     }
-    free(tmpInput);
+    tmpInput.clear();
     functionality.pasteText(line, index);
 }

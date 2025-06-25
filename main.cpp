@@ -34,7 +34,7 @@ int chooseCommand(int command, EditingText& editor, Functionality& func) {
             editor.encryptTextInFile();
             break;
         case 4:
-            func.encryptTextInFile();
+            editor.decryptTextInFile();
             break;
         case 5:
             func.showText();
@@ -43,7 +43,7 @@ int chooseCommand(int command, EditingText& editor, Functionality& func) {
             editor.insertTextOnPosition();
             break;
         case 7:
-            func.searchText();
+            editor.searchInText();
             break;
         case 8:
             editor.deleteText();
