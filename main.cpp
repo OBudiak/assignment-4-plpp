@@ -3,7 +3,7 @@
 #include <cstring>
 #include "func/functionality.cpp"
 #include "func/editing_text.cpp"
-#include "mylib.h"
+// #include "include/mylib.h"
 
 using namespace std;
 
@@ -34,7 +34,7 @@ int chooseCommand(int command, EditingText& editor, Functionality& func) {
             editor.encryptTextInFile();
             break;
         case 4:
-            editor.decryptTextInFile();
+            editor.decryptTextFromFile();
             break;
         case 5:
             func.showText();
@@ -115,17 +115,17 @@ int main() {
     while (true) {
         cout << "Write a command - ";
         int count;
-        char* input = func.readline();
-        (void)sscanf(input, "%d", &count);
-        if (!input) break;
+        string input = func.readline();
+        (void)sscanf(input.c_str(), "%d", &count);
+        if (input.empty()) break;
         if (input[0] == '\0') {
-            free(input);
+            input.clear();
             continue;
         }
 
         // char command = input[0];
         (void)chooseCommand(count, editor, func);
-        free(input);
+        input.clear();
 
         if (count == 0) break;
         count = -1;

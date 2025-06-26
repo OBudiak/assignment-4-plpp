@@ -8,14 +8,14 @@
 #include <cmath>
 #include <memory>
 
-#include "src/line.h"
+#include "../src/line.h"
 using namespace std;
 
 class Functionality {
 public:
     Functionality();
     ~Functionality();
-    string readline();
+    static string readline();
     bool isEmpty() const;
     int powerF(int power);
     void relocateMemory(const string& newText, int x, int y);
@@ -39,15 +39,16 @@ private:
     std::vector<unique_ptr<Line>> lines;
     string clipboard;
 
-    size_t getGlobalIndex(int line, int index);
+    size_t getGlobalIndex(int line, int index) const;
 
     static const int MAX_HISTORY = 5;
-    string history[MAX_HISTORY];
+    std::vector<unique_ptr<Line>> history;
+    std::vector<pair<int, bool>> changes;
     int historySize;
     int historyPos;
     int redoStartingPos;
 
-    void saveCur();
+    void saveCur(unique_ptr<Line> line, int index, bool needDelete);
 };
 
 #endif

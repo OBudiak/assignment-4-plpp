@@ -16,7 +16,7 @@ public:
     void searchInText();
 
     void encryptTextInFile();
-    void decryptTextInFile();
+    void decryptTextFromFile();
 
     void deleteText();
     void copyText();

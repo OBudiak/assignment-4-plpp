@@ -5,4 +5,5 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(assignment_4_plpp main.cpp
         src/line.cpp
-        src/line.h)
+        src/line.h
+        func/functionality.cpp)

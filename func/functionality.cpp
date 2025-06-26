@@ -19,16 +19,20 @@ Functionality::Functionality() {
 
 Functionality::~Functionality() {
     clipboard.clear();
-    for (int i = 0; i < historySize; i++) {
-        history[i].clear();
-    }
-    for (int i = 0; i < lines.size(); i++) {
-        delete lines[i];
-    }
+    history.clear();
+    changes.clear();
+    lines.clear();
 }
 
+bool Functionality::isEmpty() const {
+    return lines.empty() || lines.size() == 0 || (lines.size() == 1 && lines.front() == nullptr);
+}
+
+
 string Functionality::readline() {
-    size_t size = 64;
+    string textLine;
+    getline(cin, textLine);
+    /*size_t size = 64;
     size_t len = 0;
     char* buf = (char*)malloc(size);
     if (!buf) return NULL;
@@ -47,15 +51,15 @@ string Functionality::readline() {
         }
         buf[len++] = c;
     }
-    buf[len] = '\0';
-    return buf;
+    buf[len] = '\0';*/
+    return textLine;
 }
 
 int Functionality::powerF(int power) {
     return (int)pow(10, power);
 }
 
-size_t Functionality::getGlobalIndex(int line, int index) {
+size_t Functionality::getGlobalIndex(int line, int index) const {
     if (lines.empty()) return 0;
     auto textPtr = dynamic_cast<TextLine*>(lines[line].get());
     if (!textPtr) {
@@ -118,6 +122,10 @@ void Functionality::relocateMemory(const string& newText, int x, int y) {
         textPtr = dynamic_cast<TextLine*>(lines[y].get());
     }
     if (!textPtr) {
+        cout << "Cannot insert in not Text Line" << endl;
+        return;
+        // Creating new line if current is not TextLine.
+        /*
         auto newLine = make_unique<TextLine>(nullptr);
         textPtr = newLine.get();
         if (y >= 0 && static_cast<size_t>(y) <= lines.size()) {
@@ -125,6 +133,7 @@ void Functionality::relocateMemory(const string& newText, int x, int y) {
         } else {
             lines.push_back(move(newLine));
         }
+        */
     }
     if (x == -1 && y == -1) {
         textPtr->text += newText;
@@ -134,7 +143,7 @@ void Functionality::relocateMemory(const string& newText, int x, int y) {
                          : textPtr->text.size();
         textPtr->text.insert(pos, newText);
     }
-    saveCur();
+    saveCur(unique_ptr<Line>(textPtr), y, false);
 }
 
 
@@ -153,7 +162,7 @@ void Functionality::saveInFile(string fileName, int key) {
         uint32_t len = payload.size();
 
         fwrite(&typeId, 1, 1, f);
-        fwrite(&len, sizeof(len), 1, f);
+        fwrite(&len, len, 1, f);
         fwrite(payload.data(), 1, payload.size(), f);
     }
 
@@ -162,11 +171,11 @@ void Functionality::saveInFile(string fileName, int key) {
 
 
 void Functionality::loadFromFile(string fileName, int key) {
-    cout << "-Load from file-" << endl;
-    cout << "Enter file name: ";
-    string fileName;
-    getline(cin, fileName);
-    if (fileName.empty()) return;
+    // cout << "-Load from file-" << endl;
+    // cout << "Enter file name: ";
+    // string fileName;
+    // getline(cin, fileName);
+    // if (fileName.empty()) return;
     FILE* f = fopen(fileName.c_str(), "rb");
     if (!f) return;
 
@@ -180,12 +189,13 @@ void Functionality::loadFromFile(string fileName, int key) {
 
         vector<uint8_t> buffer(len);
         fread(buffer.data(), 1, len, f);
+        vector<uint8_t> decoded = Coding::decrypt(buffer, key);
 
         unique_ptr<Line> obj;
         switch (typeId) {
-            case 1: obj = TextLine::createFrom(buffer, offset); break;
-            case 2: obj = ContactLine::createFrom(buffer, offset); break;
-            case 3: obj = ChecklistLine::createFrom(buffer, offset); break;
+            case 1: obj = TextLine::createFrom(decoded, offset); break;
+            case 2: obj = ContactLine::createFrom(decoded, offset); break;
+            case 3: obj = ChecklistLine::createFrom(decoded, offset); break;
             default: continue;
         }
         offset += len;
@@ -195,46 +205,29 @@ void Functionality::loadFromFile(string fileName, int key) {
     fclose(f);
 }
 
-void Functionality::searchText() {
-    cout << "  -Search in text-  " << endl;
-    cout << "Enter text: ";
-    char* phrase = readline();
-    if (!phrase || phrase[0] == '\0') {
-        cout << "Empty search string" << endl << endl;
-        free(phrase);
-        return;
-    }
-    if (lines.empty()) {
-        cout << "Text is empty" << endl << endl;
-        free(phrase);
-        return;
-    }
-
+void Functionality::searchInText(string phrase) {
     int line = 0, col = 0, found = 0;
-    for (auto& line : lines) {
-        char* t = line;
-        size_t len_text = strlen(t);
-        size_t len_phrase = strlen(phrase);
+    for (auto& textLine : lines) {
+        string t = textLine->getString();
+        size_t len_text = t.size();
+        size_t len_phrase = phrase.size();
 
         for (size_t i = 0; i < len_text; i++) {
-            if (t[i] == '\n') {
-                line++;
-                col = 0;
-                continue;
-            }
-            if (i + len_phrase <= len_text && strncmp(&t[i], phrase, len_phrase) == 0) {
+            if (i + len_phrase <= len_text && strncmp(&t[i], phrase.c_str(), len_phrase) == 0) {
                 cout << "\"" << phrase << "\" - " << line << " " << col << endl;
                 found = 1;
             }
             col++;
         }
+        line++;
+        col = 0;
     }
 
     if (!found) {
         cout << "\"" << phrase << "\" was not found" << endl;
     }
     cout << endl;
-    free(phrase);
+    phrase.clear();
 }
 
 void Functionality::showText() {
@@ -258,26 +251,62 @@ void Functionality::deleteText(int line, int index, int count) {
         count = static_cast<int>(oldLen) - index;
     }
     tl->text.erase(index, count);
-    saveCur();
+    saveCur(unique_ptr<Line>(tl), line, true);
 }
 
-void Functionality::saveCur() {
+void Functionality::copyText(int line, int index, int count) {
+    if (lines.empty() || count <= 0) return;
+    string phrase = lines[line].get()->getString();
+    size_t oldLen = phrase.size();
+    if (index >= oldLen) return;
+    count = min(static_cast<size_t>(count), oldLen - index);
+    clipboard = phrase.substr(index, count);
+}
+
+void Functionality::cutText(int line, int index, int count) {
+    if (isEmpty() || count <= 0) return;
+    clipboard.clear();
+    auto& last = lines[line];
+    auto textPtr = dynamic_cast<TextLine*>(last.get());
+    if (!textPtr) {
+        cout << "Can't cut this line" << endl;
+        return;
+    }
+    string phrase = lines[line].get()->getString();
+    size_t oldLen = phrase.size();
+    if (index >= oldLen) return;
+    if ((size_t)count > oldLen - index) {
+        count = (int)(oldLen - index);
+    }
+    clipboard = phrase.substr(index, count);
+    textPtr->text.erase(index, count);
+    saveCur(move(lines[line]), line, false);
+}
+
+void Functionality::pasteText(int line, int index) {
+    if (clipboard.empty()) return;
+    string copyText = clipboard;
+    relocateMemory(copyText, index, line);
+}
+
+void Functionality::saveCur(unique_ptr<Line> line, int index, bool needDelete) {
     if (historySize < MAX_HISTORY) {
         historySize++;
         historyPos = historySize - 1;
     } else {
-        free(history[0]);
-        for (int i = 1; i < MAX_HISTORY; i++) {
-            history[i - 1] = history[i];
-        }
+        history.erase(history.begin());
+        changes.erase(changes.begin());
         historyPos = MAX_HISTORY - 1;
     }
-
-    if (lines) {
+    auto historyIt = history.begin() + historyPos;
+    history.insert(historyIt, line);
+    auto changeIt = changes.begin() + historyPos;
+    changes.emplace(changeIt, index, needDelete);
+    /*if (!isEmpty()) {
         history[historyPos] = strdup(lines);
     } else {
-        history[historyPos] = strdup("");
-    }
+        cout << "Nothing to save" << endl;
+    }*/
 
     redoStartingPos = -1;
 }
@@ -287,9 +316,9 @@ void Functionality::undoText() {
         cout << "Nothing to undo" << endl;
         return;
     }
-    int targetPos = historyPos - 1;
-    free(lines);
-    lines = strdup(history[targetPos]);
+    int targetPos = historyPos - 1;;
+    auto lineIt = lines.begin() + changes[targetPos].first;
+        lines.insert(lineIt, move(history[targetPos]));
     historyPos = targetPos;
     redoStartingPos = historyPos + 1;
 }
@@ -299,8 +328,16 @@ void Functionality::redoText() {
         cout << "Nothing to redo" << endl;
         return;
     }
-    free(lines);
-    lines = strdup(history[redoStartingPos]);
+    if (changes[redoStartingPos].second) {
+        lines.erase(lines.begin() + changes[redoStartingPos].first);
+    }
+    else {
+        auto lineIt = lines.begin() + changes[redoStartingPos].first;
+        lines.insert(lineIt, move(history[redoStartingPos]));
+        // history.erase(history.begin() + redoStartingPos);
+        // changes.erase(changes.begin() + redoStartingPos);
+
+    }
     historyPos = redoStartingPos;
     redoStartingPos = historyPos + 1 < historySize ? historyPos + 1 : -1;
 }

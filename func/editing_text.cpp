@@ -54,7 +54,7 @@ void EditingText::encryptTextInFile() {
     functionality.saveInFile(fileName, ki);
 }
 
-void EditingText::decryptTextInFile() {
+void EditingText::decryptTextFromFile() {
     cout << "  -Load text from file-  " << endl;
 
     cout << "Enter file name: ";
@@ -81,7 +81,7 @@ void EditingText::decryptTextInFile() {
         return;
     }
 
-    functionality.saveInFile(fileName, ki);
+    functionality.loadFromFile(fileName, ki);
 }
 
 void EditingText::searchInText() {
