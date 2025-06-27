@@ -15,13 +15,13 @@ using namespace std;
 
 class Line {
 public:
-    virtual ~Line() = default;
     virtual vector<uint8_t> serialize() const = 0;
-    virtual void setText( string&) ;
-    virtual string deserialize(const vector<uint8_t>& data, size_t offset) = 0;
+    virtual void setText( string&) = 0;
+    virtual string deserialize(const vector<uint8_t>& data, size_t& offset) = 0;
     virtual ostream& print(ostream& os) const = 0;
-    virtual string getString() const;
-    virtual uint8_t getCode() const;
+    virtual string getString() const = 0;
+    virtual uint8_t getCode() const = 0;
+    virtual ~Line();
 };
 
 
@@ -35,14 +35,14 @@ public:
 
     TextLine();
     TextLine(string newText);
+    ~TextLine() override;
+
     vector<uint8_t> serialize() const override;
-    string deserialize(const vector<uint8_t>& data, size_t offset) override;
+    string deserialize(const vector<uint8_t>& data, size_t& offset) override;
 
     static unique_ptr<Line> createFrom(const vector<uint8_t>& data, size_t& offset);
     string getString() const override;
     ostream& print(ostream& os) const override;
-
-    // ... реалізація serialize()/deserialize() для рядка
 };
 
 class ContactLine : public Line {
@@ -56,15 +56,14 @@ public:
 
     ContactLine();
     ContactLine(string newText);
+    ~ContactLine() override;
+
     vector<uint8_t> serialize() const override;
-    string deserialize(const vector<uint8_t>& data, size_t offset) override;
+    string deserialize(const vector<uint8_t>& data, size_t& offset) override;
 
     static unique_ptr<Line> createFrom(const vector<uint8_t>& data, size_t& offset);
     string getString() const override;
-    std::ostream& print(std::ostream& os) const override;
-    // у serialize():
-    //   [len1][bytes of firstName][len2][bytes of lastName][len3][bytes of email]
-    // у deserialize(): читає ці три блоки
+    ostream& print(ostream& os) const override;
 };
 
 class ChecklistLine : public Line {
@@ -74,23 +73,22 @@ public:
     const uint8_t code = 3;
 
     uint8_t getCode() const override;
+
     ChecklistLine();
     ChecklistLine(string);
+    ~ChecklistLine() override;
 
     void setText( string &t)  override;
 
     vector<uint8_t> serialize() const override;
-    string deserialize(const vector<uint8_t>& data, size_t offset) override;
+    string deserialize(const vector<uint8_t>& data, size_t& offset) override;
 
     static unique_ptr<Line> createFrom(const vector<uint8_t>& data, size_t& offset);
     string getString() const override;
-    std::ostream& print(std::ostream& os) const override;
-    // serialize():
-    //   [lenText][bytes of text][1 byte: 0 or 1]
-    // deserialize(): відповідно
+    ostream& print(ostream& os) const override;
 };
 
-inline std::ostream& operator<<(std::ostream& os, const Line& line) {
+inline ostream& operator<<(ostream& os, const Line& line) {
     return line.print(os);
 }
 

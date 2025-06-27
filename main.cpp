@@ -1,8 +1,8 @@
 ﻿#include <windows.h>
 #include <iostream>
 #include <cstring>
-#include "func/functionality.cpp"
-#include "func/editing_text.cpp"
+#include "include/functionality.h"
+#include "include/editing_text.h"
 // #include "include/mylib.h"
 
 using namespace std;
@@ -83,33 +83,6 @@ int chooseCommand(int command, EditingText& editor, Functionality& func) {
 }
 
 int main() {
-    HINSTANCE h = LoadLibrary(TEXT("caesar.dll"));
-    if (!h) {
-        std::cerr << "Cannot load DLL\n";
-        return 1;
-    }
-
-    typedef char* (*enc_t)(char*, int);
-    typedef char* (*dec_t)(char*, int);
-
-    enc_t enc = (enc_t)GetProcAddress(h, "encrypt");
-    dec_t dec = (dec_t)GetProcAddress(h, "decrypt");
-    if (!enc || !dec) {
-        std::cerr << "Function not found in DLL\n";
-        FreeLibrary(h);
-        return 1;
-    }
-    char text[] = "Hello, World!";
-    char* e = enc(text, 3);
-    std::cout << "Encrypted: " << e << "\n";
-
-    char* d = dec(e, 3);
-    std::cout << "Decrypted: " << d << "\n";
-
-    delete[] e;
-    delete[] d;
-    FreeLibrary(h);
-
     cout << "Welcome to text Editor V0.1" << endl;
     instruction();
 

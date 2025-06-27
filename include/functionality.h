@@ -9,10 +9,19 @@
 #include <memory>
 
 #include "../src/line.h"
+#include "mylib.h"
+
 using namespace std;
 
 class Functionality {
 public:
+    // typedef vector<uint8_t> (*enc_t)(const vector<uint8_t>&, int);
+    // typedef vector<uint8_t> (*dec_t)(const vector<uint8_t>&, int);
+
+    vector<uint8_t> (*encrypt)(vector<uint8_t> const&, int);
+
+    vector<uint8_t> (*decrypt)(vector<uint8_t> const&, int);
+
     Functionality();
     ~Functionality();
 
@@ -22,8 +31,8 @@ public:
     bool isEmpty() const;
     int powerF(int power);
     void relocateMemory(const string& newText, int x, int y);
-    void saveInFile(string, int);
-    void loadFromFile(string, int);
+    void saveInFile(const string&, int);
+    void loadFromFile(const string&, int);
     void searchInText(string);
     void showText();
 

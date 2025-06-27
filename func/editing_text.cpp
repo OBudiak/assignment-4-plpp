@@ -28,12 +28,12 @@ void EditingText::checkTask() {
     cout << "  -Check task-  " << endl;
     cout << "Line index - ";
     string lineType = functionality.readline();
-    int intLineIndex;
+    int intLineIndex = 0;
     sscanf(lineType.c_str(), "%d", &intLineIndex);
     cout << "Set task checked(1) or unchecked(0) - ";
     string isChecked = functionality.readline();
-    int intIsChecked;
-    sscanf(lineType.c_str(), "%d", &intIsChecked);
+    int intIsChecked = 0;
+    sscanf(isChecked.c_str(), "%d", &intIsChecked);
     functionality.setCheckStatus(intLineIndex, intIsChecked);
 }
 
@@ -166,7 +166,7 @@ void EditingText::insertWithReplacement() {
     string newText = functionality.readline();
     if (newText.empty()) return;
     functionality.deleteText(line, index, newText.length());
-    functionality.relocateMemory(newText, line, index);
+    functionality.relocateMemory(newText, index, line);
 }
 
 void EditingText::copyText() {

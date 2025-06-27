@@ -1,4 +1,6 @@
 ﻿#pragma once
+#include <cstdint>
+#include <vector>
 
 #ifdef _WIN32
   #ifdef BUILD_DLL
@@ -10,16 +12,9 @@
   #define MYLIB_API
 #endif
 
-#include <cstdint>
-#include <string>
-#include <vector>
 using namespace std;
 
-// Оголошуємо експортувані функції
 extern "C" {
-  class Coding{
-    public:
-    MYLIB_API static vector<uint8_t> encrypt(const vector<uint8_t>& bytes, int key);
-    MYLIB_API static vector<uint8_t> decrypt(const vector<uint8_t>& bytes, int key);
-  };
+    MYLIB_API vector<uint8_t> encrypt(const vector<uint8_t>& bytes, int key);
+    MYLIB_API vector<uint8_t> decrypt(const vector<uint8_t>& bytes, int key);
 }

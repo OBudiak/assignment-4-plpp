@@ -2,18 +2,39 @@
 
 #include <algorithm>
 #include <chrono>
+#include <memory>
 #include <sstream>
-#include "../include/mylib.h"
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#define _RPCNDR_H_
+#include <windows.h>
 
 using namespace std;
 
 Functionality::Functionality() {
-    clipboard = nullptr;
+    // clipboard = "";
     historySize = 0;
     historyPos = -1;
     redoStartingPos = -1;
-    for (int i = 0; i < MAX_HISTORY; i++) {
-        history[i] = nullptr;
+    for (auto & i : history) {
+        i = nullptr;
+    }
+
+    HINSTANCE h = LoadLibrary(TEXT("libcaesar.dll"));
+    if (!h) {
+        cerr << "Cannot load DLL" << endl;
+        cerr << "Reload an app after fixing issue" << endl;
+    }
+    else {
+        typedef vector<uint8_t> (*enc_t)( vector<uint8_t> const&, int);
+        typedef vector<uint8_t> (*dec_t)( vector<uint8_t> const&, int);
+
+        encrypt = (enc_t)GetProcAddress(h, "encrypt");
+        decrypt = (dec_t)GetProcAddress(h, "decrypt");
+        if (!encrypt || !decrypt) {
+            cerr << "Function not found in DLL" << endl;
+            FreeLibrary(h);
+        }
     }
 }
 
@@ -25,7 +46,7 @@ Functionality::~Functionality() {
 }
 
 bool Functionality::isEmpty() const {
-    return lines.empty() || lines.size() == 0 || (lines.size() == 1 && lines.front() == nullptr);
+    return lines.empty() || lines.size() == 0 || ((lines.size() < 2) && lines.front() == nullptr);
 }
 
 
@@ -74,7 +95,7 @@ size_t Functionality::getGlobalIndex(int line, int index) const {
 }
 
 void Functionality::setCheckStatus(int index, int isChecked) {
-    if (index > lines.size()) {
+    if (index >= lines.size()) {
         cout << "Index out of bounds" << endl;
         return;
     }
@@ -95,11 +116,13 @@ void Functionality::setCheckStatus(int index, int isChecked) {
 }
 
 void Functionality::addText(string &newText) {
-    if (!lines.empty()) {
-        auto& last = lines.back();
-        int lineType = last.get()->getCode();
-        last.get()->setText(newText);
+    if (isEmpty()) {
+        lines.push_back(make_unique<TextLine>());
+    }
+    auto& last = lines.back();
+    last.get()->setText(newText);
 
+    // int lineType = last.get()->getCode();
     // if (!lines.empty()) {
     //     auto& last = lines.back();
     //     auto textPtr = dynamic_cast<TextLine*>(last.get());
@@ -120,20 +143,19 @@ void Functionality::addText(string &newText) {
         }
         textPtr->text = buf;
         */
-    }
     // lines.push_back(std::make_unique<TextLine>(newText));
 }
 
 void Functionality::addNewLine(char lineType) {
     switch (lineType) {
         case 't':
-            lines.push_back(make_unique<TextLine>(nullptr));
+            lines.push_back(make_unique<TextLine>());
             break;
         case 'c':
-            lines.push_back(make_unique<ContactLine>(nullptr));
+            lines.push_back(make_unique<ContactLine>());
             break;
         case 'l':
-            lines.push_back(make_unique<ChecklistLine>(nullptr));
+            lines.push_back(make_unique<ChecklistLine>());
             break;
         default:
             cout << "Invalid line type" << endl;
@@ -169,11 +191,11 @@ void Functionality::relocateMemory(const string& newText, int x, int y) {
                          : textPtr->text.size();
         textPtr->text.insert(pos, newText);
     }
-    saveCur(unique_ptr<Line>(textPtr), y, false);
+    saveCur(make_unique<TextLine>(*textPtr), y, false);
 }
 
 
-void Functionality::saveInFile(string fileName, int key) {
+void Functionality::saveInFile(const string& fileName, int key) {
     /*cout << "-Save in file-" << endl;
     cout << "Enter file name: ";
     string fileName;
@@ -183,12 +205,12 @@ void Functionality::saveInFile(string fileName, int key) {
     if (!f) return;
 
     for (auto& line : lines) {
-        auto payload = Coding::encrypt(line->serialize(), key);
+        auto payload = encrypt(line->serialize(), key);
         uint8_t typeId = line->getCode();
         uint32_t len = payload.size();
 
         fwrite(&typeId, 1, 1, f);
-        fwrite(&len, len, 1, f);
+        fwrite(&len, sizeof(len), 1, f);
         fwrite(payload.data(), 1, payload.size(), f);
     }
 
@@ -196,7 +218,7 @@ void Functionality::saveInFile(string fileName, int key) {
 }
 
 
-void Functionality::loadFromFile(string fileName, int key) {
+void Functionality::loadFromFile(const string& fileName, int key) {
     // cout << "-Load from file-" << endl;
     // cout << "Enter file name: ";
     // string fileName;
@@ -205,29 +227,31 @@ void Functionality::loadFromFile(string fileName, int key) {
     FILE* f = fopen(fileName.c_str(), "rb");
     if (!f) return;
 
+    cout << "Reading from file " << fileName << endl;
+
     lines.clear();
     size_t offset = 0;
     while (true) {
         uint8_t  typeId;
         if (fread(&typeId, 1, 1, f) != 1) break;
+
         uint32_t len;
-        fread(&len, sizeof(len), 1, f);
+        if (fread(&len, sizeof len, 1, f) != 1) break;
 
         vector<uint8_t> buffer(len);
         fread(buffer.data(), 1, len, f);
-        vector<uint8_t> decoded = Coding::decrypt(buffer, key);
+        vector<uint8_t> decoded = decrypt(buffer, key);
 
+        size_t pos = 0;
         unique_ptr<Line> obj;
         switch (typeId) {
-            case 1: obj = TextLine::createFrom(decoded, offset); break;
-            case 2: obj = ContactLine::createFrom(decoded, offset); break;
-            case 3: obj = ChecklistLine::createFrom(decoded, offset); break;
+            case 1: obj = TextLine::createFrom(decoded, pos); break;
+            case 2: obj = ContactLine::createFrom(decoded, pos); break;
+            case 3: obj = ChecklistLine::createFrom(decoded, pos); break;
             default: continue;
         }
-        offset += len;
-        lines.push_back(move(obj));
+        lines.push_back(std::move(obj));
     }
-
     fclose(f);
 }
 
@@ -258,11 +282,11 @@ void Functionality::searchInText(string phrase) {
 
 void Functionality::showText() {
     cout << "  -Show text-  " << endl;
-    if (lines.empty()) {
-        cout << "[Текст порожній]" << endl << endl;
+    if (isEmpty()) {
+        cout << "[Text is empty]" << endl << endl;
     } else {
         for (auto& line : lines) {
-            cout << line << endl;
+            cout << line->getString() << endl;
         }
     }
 }
@@ -277,7 +301,7 @@ void Functionality::deleteText(int line, int index, int count) {
         count = static_cast<int>(oldLen) - index;
     }
     tl->text.erase(index, count);
-    saveCur(unique_ptr<Line>(tl), line, true);
+    saveCur(make_unique<TextLine>(*tl), line, true);
 }
 
 void Functionality::copyText(int line, int index, int count) {
@@ -316,6 +340,7 @@ void Functionality::pasteText(int line, int index) {
 }
 
 void Functionality::saveCur(unique_ptr<Line> line, int index, bool needDelete) {
+
     if (historySize < MAX_HISTORY) {
         historySize++;
         historyPos = historySize - 1;
@@ -324,10 +349,10 @@ void Functionality::saveCur(unique_ptr<Line> line, int index, bool needDelete) {
         changes.erase(changes.begin());
         historyPos = MAX_HISTORY - 1;
     }
-    auto historyIt = history.begin() + historyPos;
-    history.insert(historyIt, line);
-    auto changeIt = changes.begin() + historyPos;
-    changes.emplace(changeIt, index, needDelete);
+    history.push_back(std::move(line));
+    changes.emplace_back(index, needDelete);
+    historySize = static_cast<int>(history.size());
+    historyPos = historySize - 1;
     /*if (!isEmpty()) {
         history[historyPos] = strdup(lines);
     } else {
