@@ -68,7 +68,7 @@ int chooseCommand(int command, EditingText& editor, Functionality& func) {
             editor.insertWithReplacement();
             break;
         case 15:
-            editor.taskCheck();
+            editor.checkTask();
             break;
         case 'i':
             instruction();

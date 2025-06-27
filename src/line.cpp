@@ -162,9 +162,15 @@ string ChecklistLine::deserialize(const vector<uint8_t>& data, size_t offset) {
 
 unique_ptr<Line> ChecklistLine::createFrom(const vector<uint8_t>& data, size_t& offset) {
     auto ptr = make_unique<ChecklistLine>();
-    istringstream iss(ptr->deserialize(data, offset));
-    iss << '[' << ptr->checked << "] " << ptr->text;
-    ptr->text = ptr->deserialize(data, offset);
+    string full = ptr->deserialize(data, offset);
+
+    if (full.size() >= 4 && full[0] == '[' && full[2] == ']') {
+        ptr->checked = (full[1] == '1');
+        ptr->text = full.substr(4);
+    } else {
+        ptr->checked = false;
+        ptr->text = full;
+    }
     return ptr;
 }
 
