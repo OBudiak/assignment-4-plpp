@@ -17,6 +17,7 @@ class Line {
 public:
     virtual ~Line() = default;
     virtual vector<uint8_t> serialize() const = 0;
+    virtual void setText( string&) ;
     virtual string deserialize(const vector<uint8_t>& data, size_t offset) = 0;
     virtual ostream& print(ostream& os) const = 0;
     virtual string getString() const;
@@ -29,7 +30,8 @@ public:
     string text;
     const uint8_t code = 1;
 
-    uint8_t getCode() const override;;
+    uint8_t getCode() const override;
+    void setText( string& t)  override;
 
     TextLine();
     TextLine(string newText);
@@ -45,10 +47,13 @@ public:
 
 class ContactLine : public Line {
 public:
-    char* firstName, lastName, email;
+    string firstName, lastName, email;
     const uint8_t code = 2;
 
     uint8_t getCode() const override;
+
+    void setText( string &t)  override;
+
     ContactLine();
     ContactLine(string newText);
     vector<uint8_t> serialize() const override;
@@ -64,13 +69,16 @@ public:
 
 class ChecklistLine : public Line {
 public:
-    char* text;
+    string text;
     bool checked;
     const uint8_t code = 3;
 
     uint8_t getCode() const override;
     ChecklistLine();
-    ChecklistLine(string newText);
+    ChecklistLine(string);
+
+    void setText( string &t)  override;
+
     vector<uint8_t> serialize() const override;
     string deserialize(const vector<uint8_t>& data, size_t offset) override;
 

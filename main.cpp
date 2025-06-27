@@ -18,6 +18,7 @@ void instruction() {
     cout << "Undo/Redo text - 9, 10" << endl;
     cout << "Cut/Paste/Copy text - 11, 12, 13" << endl;
     cout << "Insert with replacement - 14" << endl;
+    cout << "Check a task - 15" << endl;
     cout << "Instruction - i" << endl;
     cout << "Exit - 0" << endl << endl;
 }
@@ -65,6 +66,9 @@ int chooseCommand(int command, EditingText& editor, Functionality& func) {
             break;
         case 14:
             editor.insertWithReplacement();
+            break;
+        case 15:
+            editor.taskCheck();
             break;
         case 'i':
             instruction();

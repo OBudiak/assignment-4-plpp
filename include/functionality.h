@@ -15,6 +15,9 @@ class Functionality {
 public:
     Functionality();
     ~Functionality();
+
+    void setCheckStatus(int index, int isChecked);
+
     static string readline();
     bool isEmpty() const;
     int powerF(int power);
@@ -24,7 +27,7 @@ public:
     void searchInText(string);
     void showText();
 
-    void addText(const string&);
+    void addText(string &);
     void addNewLine(char lineType /*(t - text, c - contact, l - checklist)*/);
 
     void deleteText(int line, int index, int count);

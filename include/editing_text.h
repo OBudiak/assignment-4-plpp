@@ -11,6 +11,9 @@ public:
     EditingText(Functionality& func);
     void addText();
     void addNewLine();
+
+    void checkTask();
+
     void insertTextOnPosition();
     void insertWithReplacement();
     void searchInText();

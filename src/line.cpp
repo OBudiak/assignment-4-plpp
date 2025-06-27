@@ -14,6 +14,10 @@ uint8_t TextLine::getCode() const {
     return code;
 }
 
+void TextLine::setText( string& t)  {
+    text = text.empty() ? t : text + t;
+}
+
 vector<uint8_t> TextLine::serialize() const {
      vector<uint8_t> bytes;
      uint32_t len = text.size();
@@ -23,7 +27,7 @@ vector<uint8_t> TextLine::serialize() const {
      return bytes;
  }
 
-string deserialize(const vector<uint8_t>& data, size_t offset) {
+string TextLine::deserialize(const vector<uint8_t>& data, size_t offset) {
      uint32_t len;
      memcpy(&len, data.data() + offset, sizeof(len));
      offset += sizeof(len);
@@ -50,13 +54,20 @@ ostream& TextLine::print(ostream& os) const {
 
 
 ContactLine::ContactLine() {
-     firstName = NULL, lastName = NULL, email = NULL;
+     firstName = nullptr, lastName = nullptr, email = nullptr;
 }
 ContactLine::ContactLine(string newText) {
-     firstName = NULL, lastName = NULL, email = NULL;
- }
+    istringstream iss(newText);
+    iss >> firstName >> lastName >> email;
+}
+
 uint8_t ContactLine::getCode() const{
     return code;
+}
+
+void ContactLine::setText( string& t)  {
+    istringstream iss(t);
+    iss >> firstName >> lastName >> email;
 }
 
 ostream& ContactLine::print(ostream& os) const {
@@ -73,10 +84,48 @@ string ContactLine::getString() const {
 }
 
 
+vector<uint8_t> ContactLine::serialize() const {
+    vector<uint8_t> bytes;
+    string text = getString();
+    uint32_t len = text.size();
+    uint8_t* pLen = reinterpret_cast<uint8_t*>(&len);
+    bytes.insert(bytes.end(), pLen, pLen + sizeof(len));
+    bytes.insert(bytes.end(), text.begin(), text.end());
+    return bytes;
+}
+
+string ContactLine::deserialize(const vector<uint8_t>& data, size_t offset) {
+    uint32_t len;
+    memcpy(&len, data.data() + offset, sizeof(len));
+    offset += sizeof(len);
+    string s(data.begin() + offset, data.begin() + offset + len);
+    offset += len;
+    return s;
+}
+
+unique_ptr<Line> ContactLine::createFrom(const vector<uint8_t>& data, size_t& offset) {
+    auto ptr = make_unique<ContactLine>();
+    ptr->deserialize(data, offset);
+    return ptr;
+}
+
+
+
 ChecklistLine::ChecklistLine() {
-    text = NULL;
+    text = nullptr;
      checked = false;
 }
+
+ChecklistLine::ChecklistLine(string newText) {
+    text = newText;
+    checked = false;
+}
+
+void ChecklistLine::setText(string& t)  {
+    text = text.empty() ? t : text + t;;
+    checked = false;
+}
+
 uint8_t ChecklistLine::getCode() const {
     return code;
 }
@@ -90,5 +139,32 @@ string ChecklistLine::getString() const {
     ostringstream oss;
     print(oss);
     return oss.str();
+}
+
+vector<uint8_t> ChecklistLine::serialize() const {
+    vector<uint8_t> bytes;
+    string text = getString();
+    uint32_t len = text.size();
+    uint8_t* pLen = reinterpret_cast<uint8_t*>(&len);
+    bytes.insert(bytes.end(), pLen, pLen + sizeof(len));
+    bytes.insert(bytes.end(), text.begin(), text.end());
+    return bytes;
+}
+
+string ChecklistLine::deserialize(const vector<uint8_t>& data, size_t offset) {
+    uint32_t len;
+    memcpy(&len, data.data() + offset, sizeof(len));
+    offset += sizeof(len);
+    string s(data.begin() + offset, data.begin() + offset + len);
+    offset += len;
+    return s;
+}
+
+unique_ptr<Line> ChecklistLine::createFrom(const vector<uint8_t>& data, size_t& offset) {
+    auto ptr = make_unique<ChecklistLine>();
+    istringstream iss(ptr->deserialize(data, offset));
+    iss << '[' << ptr->checked << "] " << ptr->text;
+    ptr->text = ptr->deserialize(data, offset);
+    return ptr;
 }
 

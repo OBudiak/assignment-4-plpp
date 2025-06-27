@@ -73,15 +73,41 @@ size_t Functionality::getGlobalIndex(int line, int index) const {
     return index;
 }
 
-void Functionality::addText(const string& newText) {
+void Functionality::setCheckStatus(int index, int isChecked) {
+    if (index > lines.size()) {
+        cout << "Index out of bounds" << endl;
+        return;
+    }
+    auto textPtr = dynamic_cast<ChecklistLine*>(lines[index].get());
+    if (!textPtr) {
+        cout << "Cannot check this type of line" << endl;
+        return;
+    }
+    if (isChecked == 1) {
+        textPtr->checked = true;
+    }
+    else if (isChecked == 0) {
+        textPtr->checked = false;
+    }
+    else {
+        cout << "Incorrect status (expect: 1 or 0)" << endl;
+    }
+}
+
+void Functionality::addText(string &newText) {
     if (!lines.empty()) {
         auto& last = lines.back();
-        auto textPtr = dynamic_cast<TextLine*>(last.get());
-        if (textPtr) {
-            textPtr->text += newText;
-            return;
-        }
-        textPtr->text = newText;
+        int lineType = last.get()->getCode();
+        last.get()->setText(newText);
+
+    // if (!lines.empty()) {
+    //     auto& last = lines.back();
+    //     auto textPtr = dynamic_cast<TextLine*>(last.get());
+    //     if (textPtr) {
+    //         textPtr->text += newText;
+    //         return;
+    //     }
+    //     textPtr->text = newText;}
         /*string buf = nullptr;
         int i = 0;
         while (i < textPtr->text.length()) {
@@ -95,7 +121,7 @@ void Functionality::addText(const string& newText) {
         textPtr->text = buf;
         */
     }
-    lines.push_back(std::make_unique<TextLine>(newText));
+    // lines.push_back(std::make_unique<TextLine>(newText));
 }
 
 void Functionality::addNewLine(char lineType) {

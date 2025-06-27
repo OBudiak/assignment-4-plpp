@@ -24,6 +24,19 @@ void EditingText::addNewLine() {
     functionality.addNewLine(lineType.front());
 }
 
+void EditingText::checkTask() {
+    cout << "  -Check task-  " << endl;
+    cout << "Line index - ";
+    string lineType = functionality.readline();
+    int intLineIndex;
+    sscanf(lineType.c_str(), "%d", &intLineIndex);
+    cout << "Set task checked(1) or unchecked(0) - ";
+    string isChecked = functionality.readline();
+    int intIsChecked;
+    sscanf(lineType.c_str(), "%d", &intIsChecked);
+    functionality.setCheckStatus(intLineIndex, intIsChecked);
+}
+
 void EditingText::encryptTextInFile() {
     cout << "  -Write text in file-  " << endl;
 
