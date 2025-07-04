@@ -381,7 +381,8 @@ void Functionality::undoText() {
     }
     int targetPos = historyPos - 1;;
     auto lineIt = lines.begin() + changes[targetPos].first;
-        lines.insert(lineIt, move(history[targetPos]));
+    lines.erase(lineIt);
+    lines.insert(lineIt, move(history[targetPos]));
     historyPos = targetPos;
     redoStartingPos = historyPos + 1;
 }
@@ -396,6 +397,7 @@ void Functionality::redoText() {
     }
     else {
         auto lineIt = lines.begin() + changes[redoStartingPos].first;
+        lines.erase(lineIt);
         lines.insert(lineIt, move(history[redoStartingPos]));
         // history.erase(history.begin() + redoStartingPos);
         // changes.erase(changes.begin() + redoStartingPos);
