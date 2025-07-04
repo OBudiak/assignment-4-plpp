@@ -21,6 +21,7 @@ public:
     virtual ostream& print(ostream& os) const = 0;
     virtual string getString() const = 0;
     virtual uint8_t getCode() const = 0;
+    virtual unique_ptr<Line> clone() const = 0;
     virtual ~Line();
 };
 
@@ -32,6 +33,7 @@ public:
 
     uint8_t getCode() const override;
     void setText( string& t)  override;
+    unique_ptr<Line> clone() const override;
 
     TextLine();
     TextLine(string newText);
@@ -51,8 +53,8 @@ public:
     const uint8_t code = 2;
 
     uint8_t getCode() const override;
-
     void setText( string &t)  override;
+    unique_ptr<Line> clone() const override;
 
     ContactLine();
     ContactLine(string newText);
@@ -72,13 +74,13 @@ public:
     bool checked;
     const uint8_t code = 3;
 
-    uint8_t getCode() const override;
-
     ChecklistLine();
     ChecklistLine(string);
     ~ChecklistLine() override;
 
+    uint8_t getCode() const override;
     void setText( string &t)  override;
+    unique_ptr<Line> clone() const override;
 
     vector<uint8_t> serialize() const override;
     string deserialize(const vector<uint8_t>& data, size_t& offset) override;

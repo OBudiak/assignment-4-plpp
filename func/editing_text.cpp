@@ -2,39 +2,43 @@
 
 using namespace std;
 
-EditingText::EditingText(Functionality& func) : functionality(func) {}
+EditingText::EditingText(Functionality* func) : functionality(func) {}
+
+void EditingText::setFunctionality(Functionality* func) {
+    functionality = func;
+}
 
 void EditingText::addText() {
     cout << "  -Add text-  " << endl;
     cout << "Write a text: ";
-    string newText = functionality.readline();
+    string newText = functionality->readline();
     if (newText.empty()) return;
-    functionality.addText(newText);
+    functionality->addText(newText);
 }
 
 void EditingText::addNewLine() {
     cout << "  -Add new line-  " << endl;
     cout << "Line type (t)ext, (c)ontact, check(l)ist - ";
-    string lineType = functionality.readline();
+    string lineType = functionality->readline();
     while (lineType.length() > 1) {
         cout << "Incorrect line type format!" << endl;
         cout << "Line type (t)ext, (c)ontact, check(l)ist - ";
-        lineType = functionality.readline();
+        lineType = functionality->readline();
     }
-    functionality.addNewLine(lineType.front());
+    functionality->addNewLine(lineType.front());
 }
 
 void EditingText::checkTask() {
     cout << "  -Check task-  " << endl;
     cout << "Line index - ";
-    string lineType = functionality.readline();
+    string lineType = functionality->readline();
     int intLineIndex = 0;
     sscanf(lineType.c_str(), "%d", &intLineIndex);
     cout << "Set task checked(1) or unchecked(0) - ";
-    string isChecked = functionality.readline();
+    string isChecked = functionality->readline();
     int intIsChecked = 0;
     sscanf(isChecked.c_str(), "%d", &intIsChecked);
-    functionality.setCheckStatus(intLineIndex, intIsChecked);
+    functionality->setCheckStatus(intLineIndex, intIsChecked);
 }
 
 void EditingText::encryptTextInFile() {
@@ -64,7 +68,7 @@ void EditingText::encryptTextInFile() {
         return;
     }
 
-    functionality.saveInFile(fileName, ki);
+    functionality->saveInFile(fileName, ki);
 }
 
 void EditingText::decryptTextFromFile() {
@@ -94,23 +98,23 @@ void EditingText::decryptTextFromFile() {
         return;
     }
 
-    functionality.loadFromFile(fileName, ki);
+    functionality->loadFromFile(fileName, ki);
 }
 
 void EditingText::searchInText() {
     cout << "  -Search in text-  " << endl;
-    if (functionality.isEmpty()) {
+    if (functionality->isEmpty()) {
         cout << "Cannot search in empty text" << endl << endl;
         return;
     }
     cout << "Enter text: ";
-    string phrase = functionality.readline();
+    string phrase = functionality->readline();
     if (phrase.empty() || phrase[0] == '\0') {
         cout << "Empty search string" << endl << endl;
         phrase.clear();
         return;
     }
-    functionality.searchInText(phrase);
+    functionality->searchInText(phrase);
 }
 
 
@@ -118,7 +122,7 @@ void EditingText::searchInText() {
 void EditingText::insertTextOnPosition() {
     cout << "  -Insert text by coordinate-  " << endl;
     cout << "Write a position (x y) - ";
-    string tmpInput = functionality.readline();
+    string tmpInput = functionality->readline();
     if (tmpInput.empty()) return;
     int x = 0, y = 0;
     if (sscanf(tmpInput.c_str(), "%d %d", &x, &y) != 2) {
@@ -129,15 +133,15 @@ void EditingText::insertTextOnPosition() {
     tmpInput.clear();
 
     cout << "Write a text: ";
-    string newText = functionality.readline();
+    string newText = functionality->readline();
     if (newText.empty()) return;
-    functionality.relocateMemory(newText, x, y);
+    functionality->relocateMemory(newText, x, y);
 }
 
 void EditingText::deleteText() {
     cout << "  -Delete text-  " << endl;
     cout << "Choose line, index and number of symbols: ";
-    string tmpInput = functionality.readline();
+    string tmpInput = functionality->readline();
     if (tmpInput.empty()) return;
     int line = 0, index = 0, count = 0;
     if (sscanf(tmpInput.c_str(), "%d %d %d", &line, &index, &count) != 3) {
@@ -146,13 +150,13 @@ void EditingText::deleteText() {
         return;
     }
     tmpInput.clear();
-    functionality.deleteText(line, index, count);
+    functionality->deleteText(line, index, count);
 }
 
 void EditingText::insertWithReplacement() {
     cout << "  -Insert with replacement-  " << endl;
     cout << "Choose line and index: ";
-    string tmpInput = functionality.readline();
+    string tmpInput = functionality->readline();
     if (tmpInput.empty()) return;
     int line = 0, index = 0;
     if (sscanf(tmpInput.c_str(), "%d %d", &line, &index) != 2) {
@@ -163,16 +167,16 @@ void EditingText::insertWithReplacement() {
     tmpInput.clear();
 
     cout << "Write text: ";
-    string newText = functionality.readline();
+    string newText = functionality->readline();
     if (newText.empty()) return;
-    functionality.deleteText(line, index, newText.length());
-    functionality.relocateMemory(newText, index, line);
+    functionality->deleteText(line, index, newText.length());
+    functionality->relocateMemory(newText, index, line);
 }
 
 void EditingText::copyText() {
     cout << "  -Copy text-  " << endl;
     cout << "Choose line and index and number of symbols: ";
-    string tmpInput = functionality.readline();
+    string tmpInput = functionality->readline();
     if (tmpInput.empty()) return;
     int line = 0, index = 0, count = 0;
     if (sscanf(tmpInput.c_str(), "%d %d %d", &line, &index, &count) != 3) {
@@ -181,13 +185,13 @@ void EditingText::copyText() {
         return;
     }
     tmpInput.clear();
-    functionality.copyText(line, index, count);
+    functionality->copyText(line, index, count);
 }
 
 void EditingText::cutText() {
     cout << "  -Cut text-  " << endl;
     cout << "Choose line and index and number of symbols: ";
-    string tmpInput = functionality.readline();
+    string tmpInput = functionality->readline();
     if (tmpInput.empty()) return;
     int line = 0, index = 0, count = 0;
     if (sscanf(tmpInput.c_str(), "%d %d %d", &line, &index, &count) != 3) {
@@ -196,13 +200,13 @@ void EditingText::cutText() {
         return;
     }
     tmpInput.clear();
-    functionality.cutText(line, index, count);
+    functionality->cutText(line, index, count);
 }
 
 void EditingText::pasteText() {
     cout << "  -Paste text-  " << endl;
     cout << "Choose line and index: ";
-    string tmpInput = functionality.readline();
+    string tmpInput = functionality->readline();
     if (tmpInput.empty()) return;
     int line = 0, index = 0;
     if (sscanf(tmpInput.c_str(), "%d %d", &line, &index) != 2) {
@@ -211,5 +215,5 @@ void EditingText::pasteText() {
         return;
     }
     tmpInput.clear();
-    functionality.pasteText(line, index);
+    functionality->pasteText(line, index);
 }

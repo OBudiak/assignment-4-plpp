@@ -25,6 +25,7 @@ add_executable(${PROJECT_NAME}
         func/editing_text.cpp
         func/functionality.cpp
         src/line.cpp
+        func/pages.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

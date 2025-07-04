@@ -46,7 +46,7 @@ Functionality::~Functionality() {
 }
 
 bool Functionality::isEmpty() const {
-    return lines.empty() || lines.size() == 0 || ((lines.size() < 2) && lines.front() == nullptr);
+    return lines.empty() || lines.size() == 0 /*|| ((lines.size() < 2) && lines.front() == nullptr)*/;
 }
 
 
@@ -113,14 +113,21 @@ void Functionality::setCheckStatus(int index, int isChecked) {
     else {
         cout << "Incorrect status (expect: 1 or 0)" << endl;
     }
+    auto copy = lines[index]->clone();
+    saveCur(move(copy), index, false);
 }
 
 void Functionality::addText(string &newText) {
     if (isEmpty()) {
+        // cout << "addtext" << endl;
         lines.push_back(make_unique<TextLine>());
     }
     auto& last = lines.back();
-    last.get()->setText(newText);
+    last->setText(newText);
+    {
+        auto snapshot = last->clone();
+        saveCur(move(snapshot), lines.size() - 1, false);
+    }
 
     // int lineType = last.get()->getCode();
     // if (!lines.empty()) {
@@ -150,17 +157,21 @@ void Functionality::addNewLine(char lineType) {
     switch (lineType) {
         case 't':
             lines.push_back(make_unique<TextLine>());
+            saveCur(make_unique<TextLine>(), lines.size() - 1, false);
             break;
         case 'c':
             lines.push_back(make_unique<ContactLine>());
+            saveCur(make_unique<ContactLine>(), lines.size() - 1, false);
             break;
         case 'l':
             lines.push_back(make_unique<ChecklistLine>());
+            saveCur(make_unique<ChecklistLine>(), lines.size() - 1, false);
             break;
         default:
             cout << "Invalid line type" << endl;
             break;
     }
+
 }
 
 
@@ -330,7 +341,8 @@ void Functionality::cutText(int line, int index, int count) {
     }
     clipboard = phrase.substr(index, count);
     textPtr->text.erase(index, count);
-    saveCur(move(lines[line]), line, false);
+    auto copy = lines[line]->clone();
+    saveCur(move(copy), line, false);
 }
 
 void Functionality::pasteText(int line, int index) {
@@ -349,7 +361,7 @@ void Functionality::saveCur(unique_ptr<Line> line, int index, bool needDelete) {
         changes.erase(changes.begin());
         historyPos = MAX_HISTORY - 1;
     }
-    history.push_back(std::move(line));
+    history.push_back(move(line));
     changes.emplace_back(index, needDelete);
     historySize = static_cast<int>(history.size());
     historyPos = historySize - 1;

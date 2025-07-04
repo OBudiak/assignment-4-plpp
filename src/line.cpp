@@ -15,6 +15,11 @@ TextLine::~TextLine(){
 TextLine::TextLine(string newText){
      text = newText;
  }
+
+unique_ptr<Line> TextLine::clone() const {
+    return std::make_unique<TextLine>(*this);
+}
+
 uint8_t TextLine::getCode() const {
     return code;
 }
@@ -76,6 +81,10 @@ ContactLine::~ContactLine() {
 ContactLine::ContactLine(string newText) {
     istringstream iss(newText);
     iss >> firstName >> lastName >> email;
+}
+
+unique_ptr<Line> ContactLine::clone() const {
+    return std::make_unique<ContactLine>(*this);
 }
 
 uint8_t ContactLine::getCode() const{
@@ -147,6 +156,10 @@ ChecklistLine::ChecklistLine(string newText) {
 
 ChecklistLine::~ChecklistLine() {
     text.clear();
+}
+
+unique_ptr<Line> ChecklistLine::clone() const {
+    return std::make_unique<ChecklistLine>(*this);
 }
 
 void ChecklistLine::setText(string& t)  {

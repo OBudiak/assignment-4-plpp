@@ -8,7 +8,8 @@
 
 class EditingText {
 public:
-    EditingText(Functionality& func);
+    EditingText(Functionality* func);
+    void setFunctionality(Functionality* func);
     void addText();
     void addNewLine();
 
@@ -27,7 +28,7 @@ public:
     void cutText();
 
 private:
-    Functionality& functionality;
+    Functionality* functionality;
 };
 
 #endif

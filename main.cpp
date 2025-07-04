@@ -3,6 +3,7 @@
 #include <cstring>
 #include "include/functionality.h"
 #include "include/editing_text.h"
+#include "include/pages.h"
 // #include "include/mylib.h"
 
 using namespace std;
@@ -19,11 +20,13 @@ void instruction() {
     cout << "Cut/Paste/Copy text - 11, 12, 13" << endl;
     cout << "Insert with replacement - 14" << endl;
     cout << "Check a task - 15" << endl;
+    cout << "Add/Switch To/Delete page - 18, 19, 20" << endl;
     cout << "Instruction - i" << endl;
     cout << "Exit - 0" << endl << endl;
 }
 
-int chooseCommand(int command, EditingText& editor, Functionality& func) {
+int chooseCommand(int command, EditingText& editor) {
+    Functionality& func = *Pages::getPage();
     switch (command) {
         case 1:
             editor.addText();
@@ -70,6 +73,18 @@ int chooseCommand(int command, EditingText& editor, Functionality& func) {
         case 15:
             editor.checkTask();
             break;
+        case 18:
+            Pages::addPage();
+            editor.setFunctionality(Pages::getPage());
+            break;
+        case 19:
+            Pages::switchToPage();
+            editor.setFunctionality(Pages::getPage());
+            break;
+        case 20:
+            Pages::removePage();
+            editor.setFunctionality(Pages::getPage());
+            break;
         case 'i':
             instruction();
             break;
@@ -86,13 +101,14 @@ int main() {
     cout << "Welcome to text Editor V0.1" << endl;
     instruction();
 
-    Functionality func;
-    EditingText editor(func);
+    Pages::setUp();
+    Functionality* current = Pages::getPage();
+    EditingText editor(current);
 
     while (true) {
         cout << "Write a command - ";
         int count;
-        string input = func.readline();
+        string input = Functionality::readline();
         (void)sscanf(input.c_str(), "%d", &count);
         if (input.empty()) break;
         if (input[0] == '\0') {
@@ -101,7 +117,7 @@ int main() {
         }
 
         // char command = input[0];
-        (void)chooseCommand(count, editor, func);
+        (void)chooseCommand(count, editor);
         input.clear();
 
         if (count == 0) break;
